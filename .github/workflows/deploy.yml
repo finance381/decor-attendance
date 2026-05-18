@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Install build tools
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Generate service worker precache manifest
         run: npm run build
