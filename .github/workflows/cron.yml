@@ -1,0 +1,59 @@
+name: Daily Summary & Health Check
+
+on:
+  schedule:
+    # 9 PM IST = 15:30 UTC — daily attendance summary
+    - cron: '30 15 * * *'
+    # Weekly health check — Sunday 6 AM IST = Saturday 00:30 UTC
+    - cron: '30 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Which task to run'
+        required: true
+        default: 'summary'
+        type: choice
+        options:
+          - summary
+          - health
+
+jobs:
+  daily-summary:
+    if: >-
+      github.event.schedule == '30 15 * * *' ||
+      (github.event_name == 'workflow_dispatch' && inputs.task == 'summary')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run daily summary script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/daily-summary.mjs
+
+  health-check:
+    if: >-
+      github.event.schedule == '30 0 * * 0' ||
+      (github.event_name == 'workflow_dispatch' && inputs.task == 'health')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run health check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/health-check.mjs

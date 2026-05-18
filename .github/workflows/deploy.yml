@@ -1,0 +1,87 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Manual trigger for emergency deploys
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ---------- BUILD ----------
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (for Workbox build)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install build tools
+        run: npm ci
+
+      - name: Generate service worker precache manifest
+        run: npm run build
+
+      - name: Check bundle size
+        run: |
+          echo "📦 Bundle size check (target: <150KB gzipped)"
+          total=0
+          for f in dist/css/*.css dist/js/*.js dist/index.html dist/sw.js; do
+            if [ -f "$f" ]; then
+              size=$(gzip -c "$f" | wc -c)
+              kb=$(echo "scale=1; $size/1024" | bc)
+              echo "  $f → ${kb}KB gzipped"
+              total=$((total + size))
+            fi
+          done
+          total_kb=$(echo "scale=1; $total/1024" | bc)
+          echo "  TOTAL: ${total_kb}KB gzipped"
+          if [ "$total" -gt 153600 ]; then
+            echo "❌ OVER 150KB LIMIT"
+            exit 1
+          fi
+          echo "✅ Under 150KB limit"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  # ---------- DEPLOY ----------
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ---------- LIGHTHOUSE ----------
+  lighthouse:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lighthouse audit
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ needs.deploy.outputs.page_url || 'https://ambria-group.github.io/ambria-attendance/' }}
+          budgetPath: ./lighthouse-budget.json
+          uploadArtifacts: true

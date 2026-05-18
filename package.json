@@ -1,0 +1,19 @@
+{
+  "name": "ambria-attendance",
+  "version": "1.0.0",
+  "description": "AMBRIA Group — Multi-Department Attendance PWA",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build.mjs",
+    "lint": "echo 'No lint configured yet'"
+  },
+  "devDependencies": {
+    "workbox-build": "^7.1.1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "bcryptjs": "^2.4.3",
+    "idb": "^8.0.0"
+  }
+}
