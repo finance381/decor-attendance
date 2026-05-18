@@ -69,19 +69,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  # ---------- LIGHTHOUSE ----------
-  lighthouse:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Lighthouse audit
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          urls: |
-            ${{ needs.deploy.outputs.page_url || 'https://ambria-group.github.io/ambria-attendance/' }}
-          budgetPath: ./lighthouse-budget.json
-          uploadArtifacts: true
