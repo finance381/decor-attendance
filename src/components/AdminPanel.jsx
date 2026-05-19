@@ -43,7 +43,7 @@ export default function AdminPanel({ lang, session, onClose }) {
 
   return (
     <div className="admin-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="admin-panel desktop-only-panel">
+      <div className="admin-panel">
         <div className="admin-header">
           <h2>{lang === 'hi' ? '👑 यूज़र मैनेजमेंट' : '👑 User Management'}</h2>
           <button className="toggle-btn" onClick={onClose}>✕</button>

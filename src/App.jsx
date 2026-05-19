@@ -21,7 +21,10 @@ function getWorkers(deptKey) {
 export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('ambria-lang') || 'hi');
   const [session, setSession] = useState(() => getSession());
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('admin') === '1';
+  });
   const [showChangePin, setShowChangePin] = useState(false);
   const [activeDept, setActiveDept] = useState(null);
   const [shiftOverride, setShiftOverride] = useState(null);

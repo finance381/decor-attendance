@@ -161,31 +161,3 @@ body { min-height: 100dvh; background: var(--bg); padding: 0 0 80px; transition:
 .rank-dot.r2 { background: var(--rank-2); }
 .rank-dot.r3 { background: var(--rank-3); }
 .rank-dot.r4 { background: var(--rank-4); }
-
-/* --- Desktop-only admin panel --- */
-.admin-only { display: none; }
-.desktop-only-panel .mobile-block { display: none; }
-
-@media (min-width: 768px) {
-  .admin-only { display: inline-flex; }
-}
-
-@media (max-width: 767px) {
-  .desktop-only-panel > *:not(.mobile-block) { display: none; }
-  .desktop-only-panel .mobile-block { display: block; }
-  .desktop-only-panel::before {
-    content: '💻';
-    display: block;
-    text-align: center;
-    font-size: 48px;
-    padding-top: 32px;
-  }
-  .desktop-only-panel::after {
-    content: 'Admin panel is available on desktop only / एडमिन पैनल सिर्फ़ डेस्कटॉप पर उपलब्ध है';
-    display: block;
-    text-align: center;
-    color: var(--text-muted);
-    padding: 16px 20px 32px;
-    font-size: 14px;
-  }
-}
