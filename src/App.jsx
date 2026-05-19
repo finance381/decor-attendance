@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { t, formatDate, dateKey } from './lib/i18n';
 import { DEPARTMENTS, LIGHT_WORKERS, isNightShift } from './lib/data';
 import { saveAttendance, loadAttendance, subscribeAttendance } from './lib/supabase';
+import { getSession, clearSession, login } from './lib/auth';
 import TopBar from './components/TopBar';
+import LoginScreen from './components/LoginScreen';
+import AdminPanel from './components/AdminPanel';
 import DeptGrid from './components/DeptGrid';
 import SummaryCards from './components/SummaryCards';
 import ApproverDropdown from './components/ApproverDropdown';
@@ -16,6 +19,8 @@ function getWorkers(deptKey) {
 
 export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('ambria-lang') || 'hi');
+  const [session, setSession] = useState(() => getSession());
+  const [showAdmin, setShowAdmin] = useState(false);
   const [activeDept, setActiveDept] = useState(null);
   const [shiftOverride, setShiftOverride] = useState(null);
   const [attendance, setAttendance] = useState({});
@@ -63,6 +68,14 @@ export default function App() {
   }, [activeDept]);
 
   const toggleLang = () => setLang(l => l === 'hi' ? 'en' : 'hi');
+
+  const handleLogin = async (mobile, pin) => {
+    const result = await login(mobile, pin);
+    if (result.ok) setSession(getSession());
+    return result;
+  };
+
+  const handleLogout = () => { clearSession(); setSession(null); };
 
   const toggleShift = () => {
     setShiftOverride(s => s === 'night' ? 'day' : 'night');
@@ -123,6 +136,8 @@ export default function App() {
   const workers = activeDept ? getWorkers(activeDept) : [];
   const summary = computeSummary(workers, attendance);
 
+  if (!session) return <LoginScreen lang={lang} onLogin={handleLogin} />;
+
   return (
     <>
       <TopBar
@@ -130,7 +145,11 @@ export default function App() {
         isNight={isNight}
         onToggleLang={toggleLang}
         onToggleShift={toggleShift}
+        session={session}
+        onLogout={handleLogout}
+        onAdmin={() => setShowAdmin(true)}
       />
+      {showAdmin && <AdminPanel lang={lang} session={session} onClose={() => setShowAdmin(false)} />}
       <div className="container">
         <div className="date-bar">{dateStr}</div>
         {isNight && <div className="night-banner">{t('nightBanner', lang)}</div>}
