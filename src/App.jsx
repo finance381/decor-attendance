@@ -6,6 +6,7 @@ import { getSession, clearSession, login } from './lib/auth';
 import TopBar from './components/TopBar';
 import LoginScreen from './components/LoginScreen';
 import AdminPanel from './components/AdminPanel';
+import ChangePin from './components/ChangePin';
 import DeptGrid from './components/DeptGrid';
 import SummaryCards from './components/SummaryCards';
 import ApproverDropdown from './components/ApproverDropdown';
@@ -21,6 +22,7 @@ export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('ambria-lang') || 'hi');
   const [session, setSession] = useState(() => getSession());
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showChangePin, setShowChangePin] = useState(false);
   const [activeDept, setActiveDept] = useState(null);
   const [shiftOverride, setShiftOverride] = useState(null);
   const [attendance, setAttendance] = useState({});
@@ -148,8 +150,10 @@ export default function App() {
         session={session}
         onLogout={handleLogout}
         onAdmin={() => setShowAdmin(true)}
+        onChangePin={() => setShowChangePin(true)}
       />
       {showAdmin && <AdminPanel lang={lang} session={session} onClose={() => setShowAdmin(false)} />}
+      {showChangePin && <ChangePin lang={lang} session={session} onClose={() => setShowChangePin(false)} />}
       <div className="container">
         <div className="date-bar">{dateStr}</div>
         {isNight && <div className="night-banner">{t('nightBanner', lang)}</div>}

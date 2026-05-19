@@ -17,7 +17,7 @@ function saveSession(worker) {
   localStorage.setItem(SESSION_KEY, JSON.stringify({
     id: worker.id, name_hi: worker.name_hi, name_en: worker.name_en,
     department: worker.department, rank: worker.rank, site: worker.site,
-    status: worker.status, mobile: worker.mobile,
+    status: worker.status, mobile: worker.mobile, is_admin: !!worker.is_admin,
   }));
 }
 
@@ -94,4 +94,20 @@ export async function resetWorkerPin(id) {
   const { error } = await supabase.from('workers')
     .update({ pin_hash, failed_attempts: 0, locked_until: null }).eq('id', id);
   return !error;
+}
+
+export async function changePin(workerId, currentPin, newPin) {
+  const { data: worker } = await supabase
+    .from('workers').select('pin_hash').eq('id', workerId).single();
+
+  if (!worker) return { ok: false, error: 'Worker not found' };
+
+  const match = await bcrypt.compare(currentPin, worker.pin_hash);
+  if (!match) return { ok: false, error: 'Current PIN is wrong' };
+
+  const newHash = await bcrypt.hash(newPin, 10);
+  const { error } = await supabase
+    .from('workers').update({ pin_hash: newHash }).eq('id', workerId);
+
+  return error ? { ok: false, error: error.message } : { ok: true };
 }
