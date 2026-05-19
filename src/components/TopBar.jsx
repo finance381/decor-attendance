@@ -32,7 +32,7 @@ export default function TopBar({ lang, isNight, onToggleLang, onToggleShift, ses
     <div className="top-bar">
       <h1>{t('appTitle', lang)}</h1>
       <div className="top-bar-actions">
-        {(session?.is_admin || session?.rank <= 2) && (
+        {session?.is_admin && (
           <button className="toggle-btn" onClick={handleAdminClick} title="Admin"><AdminIcon /></button>
         )}
         <button className={`toggle-btn ${isNight ? 'active' : ''}`} onClick={onToggleShift}>
