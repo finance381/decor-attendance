@@ -5,6 +5,7 @@
 
 import { t, getLang, toggleLang, formatDate, dateKey } from './i18n.js';
 import { DEPARTMENTS, RANKS, LIGHT_WORKERS, getAvailableApprovers, isNightShift } from './data.js';
+import { saveAttendance, loadAttendance, subscribeAttendance } from './supabase.js';
 
 // --- State ---
 let activeDept = null;
@@ -246,10 +247,25 @@ function bindEvents() {
 
   // Department selection
   $$('.dept-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       activeDept = btn.dataset.dept;
       attendance = {}; // Reset for new dept
       render();
+
+      // Load today's attendance from Supabase
+      const cloud = await loadAttendance(activeDept, dateKey());
+      if (Object.keys(cloud).length > 0) {
+        attendance = cloud;
+        render();
+      }
+
+      // Subscribe to realtime changes
+      subscribeAttendance(dateKey(), () => {
+        loadAttendance(activeDept, dateKey()).then(fresh => {
+          attendance = fresh;
+          render();
+        });
+      });
     });
   });
 
@@ -290,7 +306,7 @@ function bindEvents() {
 }
 
 // --- Save ---
-function handleSave() {
+async function handleSave() {
   const approver = $('#approver')?.value;
   if (!approver) {
     showToast(t('noApprover'));
@@ -303,13 +319,20 @@ function handleSave() {
     return;
   }
 
-  const summary = computeSummary(activeDept === 'light' ? LIGHT_WORKERS : []);
+  const workers = activeDept === 'light' ? LIGHT_WORKERS : [];
+  const summary = computeSummary(workers);
 
-  // TODO (Week 2): Write to Supabase instead of localStorage
-  const key = `ambria_att_${activeDept}_${dateKey()}`;
-  localStorage.setItem(key, JSON.stringify({ attendance, approver, savedAt: new Date().toISOString() }));
+  // Save to Supabase (falls back to localStorage if offline)
+  const result = await saveAttendance(activeDept, dateKey(), attendance, approver);
 
-  showToast(t('savedToast', { day: summary.day, night: summary.night, absent: summary.absent }));
+  if (result.ok) {
+    showToast(t('savedToast', { day: summary.day, night: summary.night, absent: summary.absent }));
+  } else {
+    // Offline fallback — save locally
+    const key = `ambria_att_${activeDept}_${dateKey()}`;
+    localStorage.setItem(key, JSON.stringify({ attendance, approver, savedAt: new Date().toISOString() }));
+    showToast('⚡ Saved offline — will sync when online');
+  }
 }
 
 // --- Reset ---
