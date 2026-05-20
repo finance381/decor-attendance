@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAssignments, saveAssignment, deactivateAssignment } from '../lib/training';
 import { getAllWorkers } from '../lib/auth';
+import WorkerMultiSelect from './WorkerMultiSelect';
 import { DEPARTMENTS } from '../lib/data';
 
 export default function TrainingTab({ lang, session }) {
@@ -21,7 +22,7 @@ export default function TrainingTab({ lang, session }) {
 
   if (showForm) {
     return <AssignmentForm lang={lang} session={session} item={editItem}
-      onSave={async (data) => { await saveAssignment(data); setShowForm(false); setEditItem(null); load(); }}
+      onSave={async (data) => { if (data) await saveAssignment(data); setShowForm(false); setEditItem(null); load(); }}
       onCancel={() => { setShowForm(false); setEditItem(null); }} />;
   }
 
@@ -84,7 +85,7 @@ function AssignmentForm({ lang, session, item, onSave, onCancel }) {
     youtube_url: item?.youtube_url || '',
     title: item?.title || '',
     department: item?.department || '',
-    worker_id: item?.worker_id || '',
+    worker_ids: item?.worker_id ? [item.worker_id] : [],
     type: item?.type || 'punch_in',
     questions: item?.questions || [
       { question: '', options: ['', '', ''], correct_index: 0 },
@@ -123,16 +124,25 @@ function AssignmentForm({ lang, session, item, onSave, onCancel }) {
     setForm(f => ({ ...f, questions: f.questions.filter((_, i) => i !== qi) }));
   };
 
-  const handleSave = () => {
-    const cleaned = {
-      ...form,
-      id: item?.id || undefined,
-      assigned_by: session.id,
+  const handleSave = async () => {
+    const questions = form.questions.filter(q => q.question.trim());
+    const base = {
+      youtube_url: form.youtube_url,
+      title: form.title,
       department: form.department || null,
-      worker_id: form.worker_id || null,
-      questions: form.questions.filter(q => q.question.trim()),
+      type: form.type,
+      assigned_by: session.id,
+      questions,
     };
-    onSave(cleaned);
+
+    if (form.worker_ids.length > 0) {
+      for (const wid of form.worker_ids) {
+        await saveAssignment({ ...base, worker_id: wid });
+      }
+      onSave(null); // signal done
+    } else {
+      onSave({ ...base, id: item?.id || undefined, worker_id: null });
+    }
   };
 
   return (
@@ -166,13 +176,18 @@ function AssignmentForm({ lang, session, item, onSave, onCancel }) {
             </select>
           </div>
           <div className="auth-field" style={{ gridColumn: '1 / -1' }}>
-            <label>{lang === 'hi' ? 'स्पेसिफ़िक वर्कर' : 'Specific Worker'} ({lang === 'hi' ? 'ऑप्शनल — डिपार्टमेंट को ओवरराइड करेगा' : 'optional — overrides dept'})</label>
-            <select value={form.worker_id} onChange={e => set('worker_id', e.target.value)}>
-              <option value="">— {lang === 'hi' ? 'कोई नहीं' : 'None (dept-wide)'} —</option>
-              {workers.filter(w => w.status === 'active').map(w => (
-                <option key={w.id} value={w.id}>{w.name_en} ({w.department})</option>
-              ))}
-            </select>
+            <label>
+              {lang === 'hi' ? 'स्पेसिफ़िक वर्कर' : 'Specific Workers'}
+              <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 6 }}>
+                ({lang === 'hi' ? 'ऑप्शनल — डिपार्टमेंट को ओवरराइड करेगा' : 'optional — overrides dept assignment'})
+              </span>
+            </label>
+            <WorkerMultiSelect
+              workers={workers.filter(w => w.status === 'active')}
+              selected={form.worker_ids}
+              onChange={ids => set('worker_ids', ids)}
+              lang={lang}
+            />
           </div>
         </div>
 

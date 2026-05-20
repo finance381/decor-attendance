@@ -328,3 +328,33 @@ body { min-height: 100dvh; background: var(--bg); padding: 0 0 80px; transition:
 .quiz-builder-option input[type="radio"] { accent-color: var(--present); }
 .quiz-builder-option-input { flex: 1; padding: 8px; border: 1px solid var(--border);
   border-radius: 6px; font: inherit; font-size: 14px; }
+
+  /* ===== MULTI-SELECT ===== */
+.multi-select { position: relative; }
+.multi-select-box { border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); padding: 8px; min-height: 46px; cursor: text;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; transition: border-color 0.2s; }
+.multi-select-box:focus-within { border-color: var(--primary); }
+.multi-select-placeholder { color: var(--text-muted); font-size: 14px; padding: 2px 4px; }
+.multi-select-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.multi-select-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
+  background: rgba(102,126,234,0.1); color: var(--primary); border-radius: 12px;
+  font-size: 13px; font-weight: 600; white-space: nowrap; }
+.multi-select-tag-x { border: none; background: none; color: var(--primary); cursor: pointer;
+  font-size: 15px; padding: 0 2px; line-height: 1; opacity: 0.6; }
+.multi-select-tag-x:hover { opacity: 1; }
+.multi-select-input { border: none; outline: none; background: none; font: inherit;
+  font-size: 14px; padding: 2px 4px; flex: 1; min-width: 120px; color: var(--text); }
+
+.multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: var(--surface); border: 2px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm); max-height: 280px;
+  overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.multi-select-option { display: block; width: 100%; padding: 10px 14px; border: none;
+  background: none; text-align: left; cursor: pointer; font: inherit;
+  transition: background 0.1s; border-bottom: 1px solid var(--border); }
+.multi-select-option:hover { background: var(--surface-hover); }
+.multi-select-option:last-child { border-bottom: none; }
+.multi-select-option-main { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.multi-select-option-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; padding-left: 14px; }
+.multi-select-empty { padding: 12px 14px; color: var(--text-muted); font-size: 13px; text-align: center; }
