@@ -90,18 +90,23 @@ export async function getAssignments(department) {
 export async function saveAssignment({ id, youtube_url, title, department, worker_id, type, assigned_by, questions }) {
   // Deactivate existing active assignment of same scope + type
   if (!id) {
-    const deactivateQuery = supabase
-      .from('training_assignments')
-      .update({ is_active: false })
-      .eq('type', type)
-      .eq('is_active', true);
-
     if (worker_id) {
-      deactivateQuery.eq('worker_id', worker_id);
+      await supabase
+        .from('training_assignments')
+        .update({ is_active: false })
+        .eq('type', type)
+        .eq('is_active', true)
+        .eq('worker_id', worker_id);
     } else if (department) {
-      deactivateQuery.eq('department', department).is('worker_id', null);
+      await supabase
+        .from('training_assignments')
+        .update({ is_active: false })
+        .eq('type', type)
+        .eq('is_active', true)
+        .eq('department', department)
+        .is('worker_id', null);
     }
-    await deactivateQuery;
+    // If neither worker_id nor department — don't deactivate anything
   }
 
   if (id) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { t, formatDate, dateKey } from './lib/i18n';
 import { DEPARTMENTS, LIGHT_WORKERS, isNightShift } from './lib/data';
-import { saveAttendance, loadAttendance, subscribeAttendance } from './lib/supabase';
+import { loadAttendance, subscribeAttendance } from './lib/supabase';
 import { saveNightAttendance } from './lib/training';
 import { getSession, clearSession, login } from './lib/auth';
 import TopBar from './components/TopBar';

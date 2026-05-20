@@ -23,8 +23,10 @@ export default function ComplianceTab({ lang }) {
 
   const totalWorkers = rows.length;
   const videoComplete = rows.filter(r => r.day_in?.video_completed).length;
-  const avgScore = rows.filter(r => r.day_in?.quiz_score != null)
-    .reduce((sum, r) => sum + r.day_in.quiz_score, 0) / (totalWorkers || 1);
+  const quizTakers = rows.filter(r => r.day_in?.quiz_score != null);
+  const avgScore = quizTakers.length > 0
+    ? quizTakers.reduce((sum, r) => sum + r.day_in.quiz_score, 0) / quizTakers.length
+    : 0;
 
   return (
     <div>

@@ -5,45 +5,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export async function saveAttendance(deptKey, date, attendanceMap, approver) {
-  const rows = Object.entries(attendanceMap)
-    .filter(([_, a]) => a.day || a.night || a.absent)
-    .map(([workerId, a]) => ({
-      worker_id: workerId,
-      date,
-      day: !!a.day,
-      night: !!a.night,
-      absent: !!a.absent,
-      approved_by: approver,
-      approved_at: new Date().toISOString(),
-    }));
-
-  if (!rows.length) return { ok: false, error: 'Nothing to save' };
-
-  const { error } = await supabase
-    .from('attendance')
-    .upsert(rows, { onConflict: 'worker_id,date' });
-
-  if (error) {
-    console.error('Save failed:', error);
-    return { ok: false, error: error.message };
-  }
-
-  await supabase.from('audit_log').insert({
-    action: 'save_attendance',
-    performed_by: approver,
-    details: { department: deptKey, date, count: rows.length }
-  });
-
-  return { ok: true };
-}
+// Legacy saveAttendance removed — all saves now go through punch_log via training.js
 
 export async function loadAttendance(workerIds, date) {
   if (!workerIds.length) return {};
 
   const { data, error } = await supabase
-    .from('attendance')
-    .select('worker_id, day, night, absent')
+    .from('punch_log')
+    .select('worker_id, type')
     .eq('date', date)
     .in('worker_id', workerIds);
 
@@ -51,16 +20,18 @@ export async function loadAttendance(workerIds, date) {
 
   const map = {};
   for (const row of data) {
-    map[row.worker_id] = { day: row.day, night: row.night, absent: row.absent };
+    if (!map[row.worker_id]) map[row.worker_id] = { day: false, night: false, absent: false };
+    if (row.type === 'day_in') map[row.worker_id].day = true;
+    if (row.type === 'night') map[row.worker_id].night = true;
   }
   return map;
 }
 
 export function subscribeAttendance(date, callback) {
   return supabase
-    .channel(`attendance:${date}`)
+    .channel(`punch_log:${date}`)
     .on('postgres_changes',
-      { event: '*', schema: 'public', table: 'attendance', filter: `date=eq.${date}` },
+      { event: '*', schema: 'public', table: 'punch_log', filter: `date=eq.${date}` },
       callback
     )
     .subscribe();
