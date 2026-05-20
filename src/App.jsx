@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { t, formatDate, dateKey } from './lib/i18n';
 import { DEPARTMENTS, LIGHT_WORKERS, isNightShift } from './lib/data';
 import { saveAttendance, loadAttendance, subscribeAttendance } from './lib/supabase';
+import { saveNightAttendance } from './lib/training';
 import { getSession, clearSession, login } from './lib/auth';
 import TopBar from './components/TopBar';
 import LoginScreen from './components/LoginScreen';
@@ -13,6 +14,7 @@ import ApproverDropdown from './components/ApproverDropdown';
 import WorkerList from './components/WorkerList';
 import ActionBar from './components/ActionBar';
 import Toast from './components/Toast';
+import PunchScreen from './components/PunchScreen';
 
 function getWorkers(deptKey) {
   return deptKey === 'light' ? LIGHT_WORKERS : [];
@@ -123,15 +125,14 @@ export default function App() {
     const hasAny = Object.values(attendance).some(a => a.day || a.night || a.absent);
     if (!hasAny) return showToast(t('noMarked', lang));
 
-    const result = await saveAttendance(activeDept, dateKey(), attendance, approver);
+    const result = await saveNightAttendance(attendance, approver);
     const workers = getWorkers(activeDept);
     const s = computeSummary(workers, attendance);
 
     if (result.ok) {
       showToast(t('savedToast', lang, { day: s.day, night: s.night, absent: s.absent }));
     } else {
-      localStorage.setItem(`ambria_att_${activeDept}_${dateKey()}`, JSON.stringify({ attendance, approver }));
-      showToast('⚡ Saved offline — will sync when online');
+      showToast(lang === 'hi' ? '❌ सेव नहीं हुआ' : '❌ Save failed');
     }
   };
 
@@ -173,22 +174,28 @@ export default function App() {
       <div className="container">
         <div className="date-bar">{dateStr}</div>
         {isNight && <div className="night-banner">{t('nightBanner', lang)}</div>}
-        <DeptGrid lang={lang} activeDept={activeDept} onSelect={selectDept} />
 
-        {activeDept ? (
+        {isNight ? (
           <>
-            <SummaryCards lang={lang} summary={summary} />
-            <ApproverDropdown lang={lang} isNight={isNight} value={approver} onChange={setApprover} />
-            <WorkerList lang={lang} workers={workers} attendance={attendance} onToggle={toggleAttendance} />
+            <DeptGrid lang={lang} activeDept={activeDept} onSelect={selectDept} />
+            {activeDept ? (
+              <>
+                <SummaryCards lang={lang} summary={summary} />
+                <ApproverDropdown lang={lang} isNight={isNight} value={approver} onChange={setApprover} />
+                <WorkerList lang={lang} workers={workers} attendance={attendance} onToggle={toggleAttendance} />
+              </>
+            ) : (
+              <div className="empty-state">
+                <div className="icon">👆</div>
+                <p>{lang === 'hi' ? 'ऊपर डिपार्टमेंट चुनें' : 'Select a department above'}</p>
+              </div>
+            )}
           </>
         ) : (
-          <div className="empty-state">
-            <div className="icon">👆</div>
-            <p>{lang === 'hi' ? 'ऊपर डिपार्टमेंट चुनें' : 'Select a department above'}</p>
-          </div>
+          <PunchScreen lang={lang} session={session} />
         )}
       </div>
-      {activeDept && <ActionBar lang={lang} onSave={handleSave} onReset={handleReset} />}
+      {isNight && activeDept && <ActionBar lang={lang} onSave={handleSave} onReset={handleReset} />}
       <Toast message={toast} />
     </>
   );

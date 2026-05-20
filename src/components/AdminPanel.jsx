@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getAllWorkers, createWorker, updateWorker, deleteWorker, resetWorkerPin } from '../lib/auth';
 import { getDepartmentSummaries, getTotalWorkerCounts } from '../lib/admin';
+import TrainingTab from './TrainingTab';
+import ComplianceTab from './ComplianceTab';
 import { DEPARTMENTS, RANKS } from '../lib/data';
 import { dateKey, formatDate } from '../lib/i18n';
 
@@ -20,10 +22,15 @@ export default function AdminPanel({ lang, session, onClose }) {
             <span className="nav-icon">📊</span>
             {lang === 'hi' ? 'ओवरव्यू' : 'Overview'}
           </button>
-          <button className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}
-            onClick={() => setTab('users')}>
-            <span className="nav-icon">👥</span>
-            {lang === 'hi' ? 'यूज़र्स' : 'Users'}
+          <button className={`admin-nav-btn ${tab === 'training' ? 'active' : ''}`}
+            onClick={() => setTab('training')}>
+            <span className="nav-icon">🎬</span>
+            {lang === 'hi' ? 'ट्रेनिंग' : 'Training'}
+          </button>
+          <button className={`admin-nav-btn ${tab === 'compliance' ? 'active' : ''}`}
+            onClick={() => setTab('compliance')}>
+            <span className="nav-icon">📋</span>
+            {lang === 'hi' ? 'कम्प्लायंस' : 'Compliance'}
           </button>
         </nav>
         <button className="admin-nav-btn admin-close-btn" onClick={onClose}>
@@ -34,6 +41,8 @@ export default function AdminPanel({ lang, session, onClose }) {
       <div className="admin-content">
         {tab === 'overview' && <OverviewTab lang={lang} />}
         {tab === 'users' && <UsersTab lang={lang} session={session} />}
+        {tab === 'training' && <TrainingTab lang={lang} session={session} />}
+        {tab === 'compliance' && <ComplianceTab lang={lang} />}
       </div>
     </div>
   );
