@@ -2,14 +2,14 @@ import { useState } from 'react';
 
 const SLIDES = {
   hi: [
-    { icon: '📲', title: 'ऐप इंस्टॉल करें', desc: 'WhatsApp लिंक खोलें → "होम स्क्रीन पर जोड़ें" दबाएं → ऐप तैयार!' },
+    { icon: '👋', title: 'AMBRIA हाज़िरी में स्वागत है', desc: 'यह ऐप आपकी रोज़ाना हाज़िरी, ट्रेनिंग वीडियो और क्विज़ के लिए है।' },
     { icon: '🔑', title: 'लॉगिन करें', desc: 'अपना मोबाइल नंबर और 4 अंकों का PIN डालें। पहली बार PIN: 0000' },
-    { icon: '✅', title: 'हाज़िरी लगाएं', desc: 'पंच इन → ट्रेनिंग वीडियो देखें → क्विज़ दें → पंच आउट करें' },
+    { icon: '✅', title: 'हाज़िरी लगाएं', desc: 'सुबह पंच इन करें → वीडियो देखें → क्विज़ दें → शाम को पंच आउट करें' },
   ],
   en: [
-    { icon: '📲', title: 'Install the App', desc: 'Open WhatsApp link → Tap "Add to Home Screen" → App ready!' },
+    { icon: '👋', title: 'Welcome to AMBRIA Attendance', desc: 'This app is for your daily attendance, training videos, and quizzes.' },
     { icon: '🔑', title: 'Login', desc: 'Enter your mobile number and 4-digit PIN. First time PIN: 0000' },
-    { icon: '✅', title: 'Mark Attendance', desc: 'Punch In → Watch training video → Take quiz → Punch Out' },
+    { icon: '✅', title: 'Mark Attendance', desc: 'Punch In in the morning → Watch video → Take quiz → Punch Out in the evening' },
   ],
 };
 
