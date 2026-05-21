@@ -44,9 +44,9 @@ export async function getPunchStatus(workerId, date = dateKey()) {
   return status;
 }
 
-// Record a punch
+// Record a punch (online → Supabase, offline → IndexedDB queue)
 export async function recordPunch({ workerId, type, assignmentId, quizAnswers, quizScore, videoCompleted, approvedBy }) {
-  const { error } = await supabase.from('punch_log').upsert({
+  const payload = {
     worker_id: workerId,
     date: dateKey(),
     type,
@@ -56,12 +56,31 @@ export async function recordPunch({ workerId, type, assignmentId, quizAnswers, q
     video_completed: videoCompleted || false,
     approved_by: approvedBy || null,
     punched_at: new Date().toISOString(),
-  }, { onConflict: 'worker_id,date,type' });
+  };
 
-  return !error;
+  if (!navigator.onLine) {
+    const { queuePunch } = await import('./offlineQueue');
+    const { triggerSync } = await import('./syncManager');
+    await queuePunch(payload);
+    await triggerSync();
+    return true; // treat as success — queued
+  }
+
+  const { error } = await supabase.from('punch_log').upsert(payload, { onConflict: 'worker_id,date,type' });
+
+  if (error) {
+    // Network failed mid-request — queue it
+    const { queuePunch } = await import('./offlineQueue');
+    const { triggerSync } = await import('./syncManager');
+    await queuePunch(payload);
+    await triggerSync();
+    return true;
+  }
+
+  return true;
 }
 
-// Night shift bulk save (approver flow)
+// Night shift bulk save (online → Supabase, offline → IndexedDB queue)
 export async function saveNightAttendance(attendanceMap, approver) {
   const rows = Object.entries(attendanceMap)
     .filter(([_, a]) => a.night)
@@ -74,8 +93,26 @@ export async function saveNightAttendance(attendanceMap, approver) {
     }));
 
   if (!rows.length) return { ok: false };
+
+  if (!navigator.onLine) {
+    const { queueNightAttendance } = await import('./offlineQueue');
+    const { triggerSync } = await import('./syncManager');
+    await queueNightAttendance(attendanceMap, approver);
+    await triggerSync();
+    return { ok: true, queued: true };
+  }
+
   const { error } = await supabase.from('punch_log').upsert(rows, { onConflict: 'worker_id,date,type' });
-  return { ok: !error };
+
+  if (error) {
+    const { queueNightAttendance } = await import('./offlineQueue');
+    const { triggerSync } = await import('./syncManager');
+    await queueNightAttendance(attendanceMap, approver);
+    await triggerSync();
+    return { ok: true, queued: true };
+  }
+
+  return { ok: true };
 }
 
 // Admin: get all assignments

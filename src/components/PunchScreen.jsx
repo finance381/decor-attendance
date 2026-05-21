@@ -14,8 +14,13 @@ export default function PunchScreen({ lang, session }) {
 
   const loadStatus = async () => {
     setLoading(true);
-    const s = await getPunchStatus(session.id);
-    setStatus(s);
+    try {
+      const s = await getPunchStatus(session.id);
+      setStatus(s);
+    } catch {
+      // Offline — use empty status, let worker punch (will queue)
+      setStatus({ day_in: null, day_out: null, night: null });
+    }
     setLoading(false);
   };
 
@@ -79,11 +84,15 @@ export default function PunchScreen({ lang, session }) {
   }
 
   if (step === 'done') {
+    const offlineMsg = !navigator.onLine;
     return (
       <div className="punch-flow">
         <div className="punch-success">
-          <div style={{ fontSize: 64 }}>✅</div>
-          <h2>{lang === 'hi' ? 'पंच रिकॉर्ड हो गया!' : 'Punch recorded!'}</h2>
+          <div style={{ fontSize: 64 }}>{offlineMsg ? '📡' : '✅'}</div>
+          <h2>{offlineMsg
+            ? (lang === 'hi' ? 'पंच सेव हुआ — ऑनलाइन होने पर सिंक होगा' : 'Punch saved — will sync when online')
+            : (lang === 'hi' ? 'पंच रिकॉर्ड हो गया!' : 'Punch recorded!')
+          }</h2>
         </div>
       </div>
     );

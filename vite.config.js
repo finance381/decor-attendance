@@ -10,6 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^\/decor-attendance/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/,

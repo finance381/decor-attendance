@@ -4,6 +4,9 @@ import { DEPARTMENTS, LIGHT_WORKERS, isNightShift } from './lib/data';
 import { loadAttendance, subscribeAttendance } from './lib/supabase';
 import { saveNightAttendance } from './lib/training';
 import { getSession, clearSession, login } from './lib/auth';
+import { initSyncManager, destroySyncManager } from './lib/syncManager';
+import OnboardingCarousel from './components/OnboardingCarousel';
+import IOSInstallBanner from './components/IOSInstallBanner';
 import TopBar from './components/TopBar';
 import LoginScreen from './components/LoginScreen';
 import AdminPanel from './components/AdminPanel';
@@ -25,6 +28,7 @@ export default function App() {
   const [session, setSession] = useState(() => getSession());
   const [showAdmin, setShowAdmin] = useState(false);
   const [showChangePin, setShowChangePin] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('ambria-onboarded'));
   const [activeDept, setActiveDept] = useState(null);
   const [shiftOverride, setShiftOverride] = useState(null);
   const [attendance, setAttendance] = useState({});
@@ -32,8 +36,19 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [dateStr, setDateStr] = useState(formatDate(lang));
   const channelRef = useRef(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [pendingSync, setPendingSync] = useState(0);
 
   const isNight = shiftOverride === 'night' || (!shiftOverride && isNightShift());
+
+  // Init sync manager for offline detection
+  useEffect(() => {
+    initSyncManager((online, pending) => {
+      setIsOffline(!online);
+      setPendingSync(pending);
+    });
+    return () => destroySyncManager();
+  }, []);
 
   // Persist language
   useEffect(() => {
@@ -130,7 +145,10 @@ export default function App() {
     const s = computeSummary(workers, attendance);
 
     if (result.ok) {
-      showToast(t('savedToast', lang, { day: s.day, night: s.night, absent: s.absent }));
+      const queuedMsg = result.queued
+        ? (lang === 'hi' ? ' (ऑफ़लाइन — बाद में सिंक होगा)' : ' (Offline — will sync later)')
+        : '';
+      showToast(t('savedToast', lang, { day: s.day, night: s.night, absent: s.absent }) + queuedMsg);
     } else {
       showToast(lang === 'hi' ? '❌ सेव नहीं हुआ' : '❌ Save failed');
     }
@@ -169,10 +187,17 @@ export default function App() {
         onLogout={handleLogout}
         onAdmin={() => setShowAdmin(true)}
         onChangePin={() => setShowChangePin(true)}
+        onGuide={() => setShowOnboarding(true)}
       />
       {showChangePin && <ChangePin lang={lang} session={session} onClose={() => setShowChangePin(false)} />}
       <div className="container">
         <div className="date-bar">{dateStr}</div>
+        {isOffline && (
+          <div className="offline-toast">
+            📡 {lang === 'hi' ? 'ऑफ़लाइन मोड' : 'Offline Mode'}
+            {pendingSync > 0 && ` • ${pendingSync} ${lang === 'hi' ? 'सिंक बाकी' : 'pending sync'}`}
+          </div>
+        )}
         {isNight && <div className="night-banner">{t('nightBanner', lang)}</div>}
 
         {isNight ? (
@@ -197,6 +222,13 @@ export default function App() {
       </div>
       {isNight && activeDept && <ActionBar lang={lang} onSave={handleSave} onReset={handleReset} />}
       <Toast message={toast} />
+      <IOSInstallBanner lang={lang} />
+      {showOnboarding && (
+        <OnboardingCarousel lang={lang} onClose={() => {
+          setShowOnboarding(false);
+          localStorage.setItem('ambria-onboarded', '1');
+        }} />
+      )}
     </>
   );
 }

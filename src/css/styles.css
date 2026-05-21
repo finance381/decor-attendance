@@ -358,3 +358,152 @@ body { min-height: 100dvh; background: var(--bg); padding: 0 0 80px; transition:
 .multi-select-option-main { display: flex; align-items: center; gap: 6px; font-size: 14px; }
 .multi-select-option-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; padding-left: 14px; }
 .multi-select-empty { padding: 12px 14px; color: var(--text-muted); font-size: 13px; text-align: center; }
+
+/* Offline toast */
+.offline-toast {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  margin: 0 0 12px 0;
+  animation: pulse-offline 2s ease-in-out infinite;
+}
+
+@keyframes pulse-offline {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Onboarding Carousel */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.onboarding-card {
+  background: var(--card-bg, #fff);
+  border-radius: 20px;
+  padding: 32px 24px 24px;
+  max-width: 360px;
+  width: 100%;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.onboarding-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-muted, #999);
+}
+
+.onboarding-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.onboarding-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.onboarding-desc {
+  font-size: 15px;
+  color: var(--text-muted, #666);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border, #ddd);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.onboarding-dot.active {
+  background: var(--primary, #667eea);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.onboarding-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.onboarding-btn:active { transform: scale(0.96); }
+
+.onboarding-btn.primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+
+.onboarding-btn.secondary {
+  background: var(--card-bg, #f0f0f0);
+  color: var(--text, #333);
+  border: 1px solid var(--border, #ddd);
+}
+
+/* iOS Install Banner */
+.ios-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  padding: 14px 40px 14px 16px;
+  font-size: 14px;
+  z-index: 999;
+  text-align: center;
+}
+
+.ios-banner p { margin: 0; }
+
+.ios-banner-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}

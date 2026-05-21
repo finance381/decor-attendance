@@ -15,7 +15,7 @@ const AdminIcon = () => (
   </svg>
 );
 
-export default function TopBar({ lang, isNight, onToggleLang, onToggleShift, session, onLogout, onAdmin, onChangePin }) {
+export default function TopBar({ lang, isNight, onToggleLang, onToggleShift, session, onLogout, onAdmin, onChangePin, onGuide }) {
   const handleAdminClick = () => {
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
     if (isMobile) {
@@ -41,6 +41,7 @@ export default function TopBar({ lang, isNight, onToggleLang, onToggleShift, ses
         <button className="toggle-btn" onClick={onToggleLang}>
           {lang === 'hi' ? '🇬🇧 EN' : '🇮🇳 हिंदी'}
         </button>
+        <button className="toggle-btn" onClick={onGuide} title={lang === 'hi' ? 'गाइड' : 'Guide'}>❓</button>
         <button className="toggle-btn" onClick={onChangePin} title="Change PIN">🔑</button>
         <button className="toggle-btn" onClick={onLogout} title="Logout"><LogoutIcon /></button>
       </div>
