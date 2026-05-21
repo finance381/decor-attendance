@@ -100,7 +100,6 @@ function OverviewTab({ lang }) {
               {DEPARTMENTS.map(dept => {
                 const s = summaries.find(x => x.department === dept.key) || { day: 0, night: 0, absent: 0, total: 0 };
                 const total = workerCounts[dept.key] || 0;
-                const pending = total - s.total;
                 return (
                   <tr key={dept.key}>
                     <td><span className="dept-tag">{dept.emoji} {dept[lang] || dept.en}</span></td>
@@ -108,7 +107,7 @@ function OverviewTab({ lang }) {
                     <td className="cell-day">{s.day}</td>
                     <td className="cell-night">{s.night}</td>
                     <td className="cell-absent">{s.absent}</td>
-                    <td className="cell-pending">{pending > 0 ? pending : '—'}</td>
+                    <td className="cell-pending">{s.absent > 0 ? s.absent : '—'}</td>
                   </tr>
                 );
               })}
