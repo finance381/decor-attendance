@@ -3,6 +3,7 @@ import { getAllWorkers, createWorker, updateWorker, deleteWorker, resetWorkerPin
 import { getDepartmentSummaries, getTotalWorkerCounts } from '../lib/admin';
 import TrainingTab from './TrainingTab';
 import ComplianceTab from './ComplianceTab';
+import OwnerDashboard from './OwnerDashboard';
 import { DEPARTMENTS, RANKS } from '../lib/data';
 import { dateKey, formatDate } from '../lib/i18n';
 
@@ -32,6 +33,11 @@ export default function AdminPanel({ lang, session, onClose }) {
             <span className="nav-icon">📋</span>
             {lang === 'hi' ? 'कम्प्लायंस' : 'Compliance'}
           </button>
+          <button className={`admin-nav-btn ${tab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setTab('dashboard')}>
+            <span className="nav-icon">📈</span>
+            {lang === 'hi' ? 'ओनर डैश' : 'Owner Dash'}
+          </button>
         </nav>
         <button className="admin-nav-btn admin-close-btn" onClick={onClose}>
           <span className="nav-icon">←</span>
@@ -43,6 +49,7 @@ export default function AdminPanel({ lang, session, onClose }) {
         {tab === 'users' && <UsersTab lang={lang} session={session} />}
         {tab === 'training' && <TrainingTab lang={lang} session={session} />}
         {tab === 'compliance' && <ComplianceTab lang={lang} />}
+        {tab === 'dashboard' && <OwnerDashboard lang={lang} />}
       </div>
     </div>
   );
