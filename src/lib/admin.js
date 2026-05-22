@@ -125,6 +125,42 @@ export async function getAbsentWorkers(startDate, endDate) {
     .filter(w => w.absentDays > 0)
     .sort((a, b) => b.absentDays - a.absentDays);
 }
+// Department summaries for a date range
+export async function getDepartmentSummariesRange(startDate, endDate) {
+  const { data, error } = await supabase
+    .from('punch_log')
+    .select('worker_id, type, workers!inner(department)')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error || !data) return [];
+
+  const totalCounts = await getTotalWorkerCounts();
+
+  const depts = {};
+  for (const row of data) {
+    const dept = row.workers?.department || 'unknown';
+    if (!depts[dept]) depts[dept] = { department: dept, day: 0, night: 0, absent: 0, total: 0, _workers: new Set() };
+    depts[dept]._workers.add(row.worker_id);
+    if (row.type === 'day_in') depts[dept].day++;
+    if (row.type === 'night') depts[dept].night++;
+  }
+
+  for (const dept of Object.values(depts)) {
+    dept.total = totalCounts[dept.department] || 0;
+    dept.absent = dept.total - dept._workers.size;
+    if (dept.absent < 0) dept.absent = 0;
+    delete dept._workers;
+  }
+
+  for (const [deptKey, count] of Object.entries(totalCounts)) {
+    if (!depts[deptKey]) {
+      depts[deptKey] = { department: deptKey, day: 0, night: 0, absent: count, total: count };
+    }
+  }
+
+  return Object.values(depts);
+}
 export async function getTotalWorkerCounts() {
   const { data } = await supabase
     .from('workers')

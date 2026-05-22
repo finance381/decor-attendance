@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getAllWorkers, createWorker, updateWorker, deleteWorker, resetWorkerPin } from '../lib/auth';
-import { getDepartmentSummaries, getTotalWorkerCounts } from '../lib/admin';
+import { getDepartmentSummaries, getDepartmentSummariesRange, getTotalWorkerCounts } from '../lib/admin';
 import TrainingTab from './TrainingTab';
 import ComplianceTab from './ComplianceTab';
 import OwnerDashboard from './OwnerDashboard';
 import { DEPARTMENTS, RANKS } from '../lib/data';
 import { dateKey, formatDate } from '../lib/i18n';
-import { exportDayReport } from '../lib/exportExcel';
+import { exportRangeReport } from '../lib/exportExcel';
 
 export default function AdminPanel({ lang, session, onClose }) {
   const [tab, setTab] = useState('overview');
@@ -61,14 +61,17 @@ function OverviewTab({ lang }) {
   const [summaries, setSummaries] = useState([]);
   const [workerCounts, setWorkerCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(dateKey());
+  const [endDate, setEndDate] = useState(dateKey());
 
   useEffect(() => {
-    Promise.all([getDepartmentSummaries(), getTotalWorkerCounts()]).then(([s, c]) => {
+    setLoading(true);
+    Promise.all([getDepartmentSummariesRange(startDate, endDate), getTotalWorkerCounts()]).then(([s, c]) => {
       setSummaries(s);
       setWorkerCounts(c);
       setLoading(false);
     });
-  }, []);
+  }, [startDate, endDate]);
 
   const today = formatDate(lang);
   const totalWorkers = Object.values(workerCounts).reduce((a, b) => a + b, 0);
@@ -80,10 +83,12 @@ function OverviewTab({ lang }) {
     <div>
       <div className="admin-page-header">
         <h1>{lang === 'hi' ? '📊 आज का ओवरव्यू' : '📊 Today\'s Overview'}</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <p className="admin-date">{today}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <input type="date" className="admin-search" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ maxWidth: 160 }} />
+          <span style={{ color: 'var(--text-muted)' }}>→</span>
+          <input type="date" className="admin-search" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ maxWidth: 160 }} />
           {!loading && (
-            <button className="admin-add-btn" onClick={() => exportDayReport(dateKey(), summaries, workerCounts, lang)}>
+            <button className="admin-add-btn" onClick={() => exportRangeReport(startDate, endDate, summaries, lang)}>
               📥 {lang === 'hi' ? 'Excel डाउनलोड' : 'Export Excel'}
             </button>
           )}
