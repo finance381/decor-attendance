@@ -3,6 +3,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { getAttendanceRange, getDailyTrend, getAbsentWorkers, getTotalWorkerCounts } from '../lib/admin';
 import { DEPARTMENTS } from '../lib/data';
 import { dateKey } from '../lib/i18n';
+import { exportRangeReport } from '../lib/exportExcel';
 
 const RANGE_OPTIONS = [
   { key: 'today', hi: 'आज', en: 'Today' },
@@ -103,6 +104,16 @@ export default function OwnerDashboard({ lang }) {
     <div>
       <div className="admin-page-header">
         <h1>{lang === 'hi' ? '📈 ओनर डैशबोर्ड' : '📈 Owner Dashboard'}</h1>
+        {!loading && (
+          <button className="admin-add-btn" onClick={() => {
+            const { start, end } = range === 'custom'
+              ? { start: customStart || dateKey(), end: customEnd || dateKey() }
+              : getDateRange(range);
+            exportRangeReport(start, end, deptData, lang);
+          }}>
+            📥 {lang === 'hi' ? 'Excel डाउनलोड' : 'Export Excel'}
+          </button>
+        )}
       </div>
 
       {/* Range selector */}

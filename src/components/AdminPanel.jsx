@@ -6,6 +6,7 @@ import ComplianceTab from './ComplianceTab';
 import OwnerDashboard from './OwnerDashboard';
 import { DEPARTMENTS, RANKS } from '../lib/data';
 import { dateKey, formatDate } from '../lib/i18n';
+import { exportDayReport } from '../lib/exportExcel';
 
 export default function AdminPanel({ lang, session, onClose }) {
   const [tab, setTab] = useState('overview');
@@ -79,7 +80,14 @@ function OverviewTab({ lang }) {
     <div>
       <div className="admin-page-header">
         <h1>{lang === 'hi' ? '📊 आज का ओवरव्यू' : '📊 Today\'s Overview'}</h1>
-        <p className="admin-date">{today}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <p className="admin-date">{today}</p>
+          {!loading && (
+            <button className="admin-add-btn" onClick={() => exportDayReport(dateKey(), summaries, workerCounts, lang)}>
+              📥 {lang === 'hi' ? 'Excel डाउनलोड' : 'Export Excel'}
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? <p className="admin-loading">Loading...</p> : (
