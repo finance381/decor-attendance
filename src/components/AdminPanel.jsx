@@ -24,6 +24,11 @@ export default function AdminPanel({ lang, session, onClose }) {
             <span className="nav-icon">📊</span>
             {lang === 'hi' ? 'ओवरव्यू' : 'Overview'}
           </button>
+          <button className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}
+            onClick={() => setTab('users')}>
+            <span className="nav-icon">👥</span>
+            {lang === 'hi' ? 'यूज़र्स' : 'Users'}
+          </button>
           <button className={`admin-nav-btn ${tab === 'training' ? 'active' : ''}`}
             onClick={() => setTab('training')}>
             <span className="nav-icon">🎬</span>
