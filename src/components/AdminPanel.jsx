@@ -264,7 +264,14 @@ function UsersTab({ lang, session }) {
                     </div>
                   </td>
                   <td className="cell-mono">{w.mobile || '—'}</td>
-                  <td>{dept ? `${dept.emoji} ${dept[lang] || dept.en}` : '—'}</td>
+                  <td>
+                    {dept ? `${dept.emoji} ${dept[lang] || dept.en}` : '—'}
+                    {w.visible_departments?.length > 0 && (
+                      <div className="cell-sub">
+                        +{w.visible_departments.length - (w.visible_departments.includes(w.department) ? 1 : 0)} {lang === 'hi' ? 'और' : 'more'}
+                      </div>
+                    )}
+                  </td>
                   <td><span className={`rank-badge r${w.rank}`}>{RANKS[w.rank]?.short || `R${w.rank}`}</span></td>
                   <td>{(lang === 'hi' ? w.role_hi : w.role_en) || '—'}</td>
                   <td><span className={`status-badge ${w.status}`}>{w.status}</span></td>
@@ -294,8 +301,19 @@ function WorkerForm({ lang, worker, onSave, onCancel }) {
     mobile: worker?.mobile || '', department: worker?.department || '',
     rank: String(worker?.rank || 4), site: worker?.site || '',
     role_hi: worker?.role_hi || '', role_en: worker?.role_en || '',
+    visible_departments: worker?.visible_departments || [],
   });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const toggleVisibleDept = (key) => {
+    setForm(f => {
+      const current = f.visible_departments || [];
+      const next = current.includes(key)
+        ? current.filter(d => d !== key)
+        : [...current, key];
+      return { ...f, visible_departments: next };
+    });
+  };  
 
   return (
     <div className="admin-form">
@@ -339,6 +357,25 @@ function WorkerForm({ lang, worker, onSave, onCancel }) {
         </div>
       </div>
 
+      {/* Visible Departments — for managers/supervisors */}
+      <div className="auth-field" style={{ marginTop: 16 }}>
+        <label>{lang === 'hi' ? 'दिखाई देने वाले डिपार्टमेंट (मैनेजर/सुपरवाइज़र के लिए)' : 'Visible Departments (for managers/supervisors)'}</label>
+        <div className="visible-dept-grid">
+          {DEPARTMENTS.map(d => {
+            const isChecked = (form.visible_departments || []).includes(d.key);
+            return (
+              <label key={d.key} className={`visible-dept-chip ${isChecked ? 'active' : ''}`}>
+                <input type="checkbox" checked={isChecked} onChange={() => toggleVisibleDept(d.key)} style={{ display: 'none' }} />
+                {d.emoji} {d[lang] || d.en}
+              </label>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+          {lang === 'hi' ? 'खाली = सिर्फ़ अपना डिपार्टमेंट' : 'Empty = own department only'}
+        </p>
+      </div>
+
       <div className="admin-form-actions">
         <button className="auth-btn secondary" style={{ border: '1px solid var(--border)', maxWidth: 200 }} onClick={onCancel}>
           {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
@@ -346,6 +383,7 @@ function WorkerForm({ lang, worker, onSave, onCancel }) {
         <button className="auth-btn primary" style={{ maxWidth: 200 }} onClick={() => onSave(worker ? {
           name_hi: form.name_hi, name_en: form.name_en, department: form.department,
           rank: parseInt(form.rank), site: form.site, role_hi: form.role_hi, role_en: form.role_en,
+          visible_departments: form.visible_departments,
         } : form)}>
           {lang === 'hi' ? '💾 सेव' : '💾 Save'}
         </button>

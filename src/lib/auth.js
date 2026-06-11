@@ -30,6 +30,7 @@ function saveSession(worker) {
     mobile: worker.mobile,
     is_admin: worker.is_admin,
     auth_uid: worker.auth_uid,
+    visible_departments: worker.visible_departments || [],
   }));
 }
 
@@ -111,7 +112,7 @@ export async function getAllWorkers(department) {
   return data || [];
 }
 
-export async function createWorker({ name_hi, name_en, mobile, department, rank, site, role_hi, role_en }) {
+export async function createWorker({ name_hi, name_en, mobile, department, rank, site, role_hi, role_en, visible_departments }) {
   const id = 'w_' + mobile.replace(/\D/g, '').slice(-10);
   const email = toEmail(mobile);
 
@@ -137,6 +138,7 @@ export async function createWorker({ name_hi, name_en, mobile, department, rank,
     role_hi: role_hi || '', role_en: role_en || '',
     pin_hash: '', status: 'active', auth_uid,
     failed_attempts: 0, is_admin: false,
+    visible_departments: visible_departments || [],
   });
 
   if (error) {

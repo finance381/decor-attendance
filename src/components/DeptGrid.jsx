@@ -1,9 +1,10 @@
 import { DEPARTMENTS } from '../lib/data';
 
-export default function DeptGrid({ lang, activeDept, onSelect }) {
+export default function DeptGrid({ lang, activeDept, onSelect, allowedDepts }) {
+  const depts = allowedDepts ? DEPARTMENTS.filter(d => allowedDepts.includes(d.key)) : DEPARTMENTS;
   return (
     <div className="dept-grid">
-      {DEPARTMENTS.map(d => (
+      {depts.map(d => (
         <button
           key={d.key}
           className={`dept-btn ${activeDept === d.key ? 'active' : ''}`}

@@ -206,7 +206,8 @@ export default function App() {
 
         {isNight ? (
           <>
-            <DeptGrid lang={lang} activeDept={activeDept} onSelect={selectDept} />
+            <DeptGrid lang={lang} activeDept={activeDept} onSelect={selectDept} 
+              allowedDepts={session?.is_admin ? null : [session?.department, ...(session?.visible_departments || [])]} />
             {activeDept ? (
               <>
                 <SummaryCards lang={lang} summary={summary} />
