@@ -17,7 +17,7 @@ export default function ChangePin({ lang, session, onClose }) {
 
     setLoading(true);
     setError('');
-    const result = await changePin(session.id, current, newPin);
+    const result = await changePin(current, newPin);
     setLoading(false);
 
     if (result.ok) setDone(true);

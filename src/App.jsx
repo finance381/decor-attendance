@@ -101,7 +101,11 @@ export default function App() {
     return result;
   };
 
-  const handleLogout = () => { clearSession(); setSession(null); };
+  const handleLogout = async () => { 
+  const { logout } = await import('./lib/auth');
+  await logout();
+  setSession(null); 
+};
 
   const toggleShift = () => {
     setShiftOverride(s => s === 'night' ? 'day' : 'night');

@@ -1,61 +1,108 @@
 import { supabase } from './supabase';
-import bcrypt from 'bcryptjs';
 
-const SESSION_KEY = 'ambria_session';
-const DEFAULT_PIN = '0000';
+const EMAIL_DOMAIN = '@ambria.app';
+
+function toEmail(mobile) {
+  return mobile.replace(/\D/g, '') + EMAIL_DOMAIN;
+}
+
+// --- Session ---
 
 export function getSession() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem('ambria_session'));
+  } catch { return null; }
 }
 
 export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem('ambria_session');
 }
 
 function saveSession(worker) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({
-    id: worker.id, name_hi: worker.name_hi, name_en: worker.name_en,
-    department: worker.department, rank: worker.rank, site: worker.site,
-    status: worker.status, mobile: worker.mobile, is_admin: !!worker.is_admin,
+  localStorage.setItem('ambria_session', JSON.stringify({
+    id: worker.id,
+    name_hi: worker.name_hi,
+    name_en: worker.name_en,
+    department: worker.department,
+    rank: worker.rank,
+    site: worker.site,
+    status: worker.status,
+    mobile: worker.mobile,
+    is_admin: worker.is_admin,
+    auth_uid: worker.auth_uid,
   }));
 }
 
+// --- Login ---
+
 export async function login(mobile, pin) {
-  const { data: worker, error } = await supabase
-    .from('workers').select('*').eq('mobile', mobile).single();
+  const email = toEmail(mobile);
 
-  if (error || !worker) return { ok: false, error: 'Mobile number not found' };
-  if (worker.status === 'inactive') return { ok: false, error: 'Account deactivated' };
+  // Sign in with Supabase Auth
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password: pin,
+  });
 
-  if (worker.locked_until && new Date(worker.locked_until) > new Date()) {
-    const mins = Math.ceil((new Date(worker.locked_until) - new Date()) / 60000);
-    return { ok: false, error: `Locked. Try after ${mins} min` };
-  }
-
-  const match = await bcrypt.compare(pin, worker.pin_hash);
-  if (!match) {
-    const attempts = (worker.failed_attempts || 0) + 1;
-    const updates = { failed_attempts: attempts };
-    if (attempts >= 5) {
-      updates.locked_until = new Date(Date.now() + 15 * 60000).toISOString();
-      updates.failed_attempts = 0;
+  if (authError) {
+    if (authError.message.includes('Invalid login')) {
+      return { ok: false, error: 'Wrong mobile or PIN' };
     }
-    await supabase.from('workers').update(updates).eq('id', worker.id);
-    return { ok: false, error: attempts >= 5 ? 'Too many attempts. Locked 15 min' : `Wrong PIN (${attempts}/5)` };
+    return { ok: false, error: authError.message };
   }
 
-  await supabase.from('workers').update({ failed_attempts: 0, locked_until: null }).eq('id', worker.id);
-  await supabase.auth.signInAnonymously();
+  // Fetch worker profile
+  const { data: worker, error: workerError } = await supabase
+    .from('workers')
+    .select('*')
+    .eq('auth_uid', authData.user.id)
+    .single();
+
+  if (workerError || !worker) {
+    // Auth user exists but no worker profile
+    await supabase.auth.signOut();
+    return { ok: false, error: 'Account not set up. Contact admin.' };
+  }
+
+  if (worker.status === 'inactive') {
+    await supabase.auth.signOut();
+    return { ok: false, error: 'Account deactivated' };
+  }
+
   saveSession(worker);
   return { ok: true, worker };
 }
 
-// --- Admin: User Management ---
+// --- Logout ---
 
-export async function getDefaultPinHash() {
-  return await bcrypt.hash(DEFAULT_PIN, 10);
+export async function logout() {
+  await supabase.auth.signOut();
+  clearSession();
 }
+
+// --- Change PIN (logged-in user) ---
+
+export async function changePin(currentPin, newPin) {
+  // Verify current session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, error: 'Not logged in' };
+
+  // Verify current PIN by re-signing in
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: session.user.email,
+    password: currentPin,
+  });
+
+  if (verifyError) return { ok: false, error: 'Current PIN is wrong' };
+
+  // Update password
+  const { error } = await supabase.auth.updateUser({ password: newPin });
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true };
+}
+
+// --- Admin: User Management ---
 
 export async function getAllWorkers(department) {
   const query = supabase.from('workers').select('*').order('rank').order('name_en');
@@ -66,16 +113,38 @@ export async function getAllWorkers(department) {
 
 export async function createWorker({ name_hi, name_en, mobile, department, rank, site, role_hi, role_en }) {
   const id = 'w_' + mobile.replace(/\D/g, '').slice(-10);
-  const pin_hash = await getDefaultPinHash();
+  const email = toEmail(mobile);
 
+  // Create auth user via DB function
+  const { data: uidData, error: uidError } = await supabase.rpc('admin_create_user', {
+    user_email: email,
+    user_password: '0000',
+  });
+
+  if (uidError) {
+    if (uidError.message.includes('duplicate') || uidError.message.includes('unique')) {
+      return { ok: false, error: 'Mobile number already registered' };
+    }
+    return { ok: false, error: uidError.message };
+  }
+
+  const auth_uid = uidData;
+
+  // Insert worker profile
   const { error } = await supabase.from('workers').insert({
     id, name_hi, name_en, mobile, department,
     rank: parseInt(rank), site: site || null,
     role_hi: role_hi || '', role_en: role_en || '',
-    pin_hash, status: 'active', failed_attempts: 0,
+    pin_hash: '', status: 'active', auth_uid,
+    failed_attempts: 0, is_admin: false,
   });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    // Rollback: delete auth user
+    await supabase.rpc('admin_delete_auth_user', { target_auth_uid: auth_uid });
+    return { ok: false, error: error.message };
+  }
+
   return { ok: true };
 }
 
@@ -90,24 +159,15 @@ export async function deleteWorker(id) {
 }
 
 export async function resetWorkerPin(id) {
-  const pin_hash = await getDefaultPinHash();
-  const { error } = await supabase.from('workers')
-    .update({ pin_hash, failed_attempts: 0, locked_until: null }).eq('id', id);
+  // Get worker's auth_uid
+  const { data: worker } = await supabase.from('workers').select('auth_uid').eq('id', id).single();
+  if (!worker?.auth_uid) return false;
+
+  // Reset via DB function
+  const { error } = await supabase.rpc('admin_reset_pin', {
+    target_auth_uid: worker.auth_uid,
+    new_pin: '0000',
+  });
+
   return !error;
-}
-
-export async function changePin(workerId, currentPin, newPin) {
-  const { data: worker } = await supabase
-    .from('workers').select('pin_hash').eq('id', workerId).single();
-
-  if (!worker) return { ok: false, error: 'Worker not found' };
-
-  const match = await bcrypt.compare(currentPin, worker.pin_hash);
-  if (!match) return { ok: false, error: 'Current PIN is wrong' };
-
-  const newHash = await bcrypt.hash(newPin, 10);
-  const { error } = await supabase
-    .from('workers').update({ pin_hash: newHash }).eq('id', workerId);
-
-  return error ? { ok: false, error: error.message } : { ok: true };
 }
