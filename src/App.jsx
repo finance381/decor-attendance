@@ -55,13 +55,6 @@ export default function App() {
     localStorage.setItem('ambria-lang', lang);
   }, [lang]);
 
-  // Auto-open admin if ?admin=1 and user is admin
-  useEffect(() => {
-    if (session?.is_admin && new URLSearchParams(window.location.search).get('admin') === '1') {
-      setShowAdmin(true);
-    }
-  }, [session]);
-
   // Update body shift attribute for CSS
   useEffect(() => {
     document.body.dataset.shift = isNight ? 'night' : 'day';
@@ -171,13 +164,7 @@ export default function App() {
   if (!session) return <LoginScreen lang={lang} onLogin={handleLogin} />;
 
   if (showAdmin && session?.is_admin) {
-    return <AdminPanel lang={lang} session={session} onClose={() => {
-      setShowAdmin(false);
-      // Clean up URL param if present
-      const url = new URL(window.location.href);
-      url.searchParams.delete('admin');
-      window.history.replaceState({}, '', url.toString());
-    }} />;
+    return <AdminPanel lang={lang} session={session} onClose={() => setShowAdmin(false)} />;
   }
 
   return (

@@ -13,42 +13,12 @@ export default function AdminPanel({ lang, session, onClose }) {
 
   return (
     <div className="admin-dash">
-      <div className="admin-sidebar">
-        <div className="admin-logo">
-          <h2>AMBRIA</h2>
-          <span>{lang === 'hi' ? 'एडमिन डैश' : 'Admin Dash'}</span>
-        </div>
-        <nav className="admin-nav">
-          <button className={`admin-nav-btn ${tab === 'overview' ? 'active' : ''}`}
-            onClick={() => setTab('overview')}>
-            <span className="nav-icon">📊</span>
-            {lang === 'hi' ? 'ओवरव्यू' : 'Overview'}
-          </button>
-          <button className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}
-            onClick={() => setTab('users')}>
-            <span className="nav-icon">👥</span>
-            {lang === 'hi' ? 'यूज़र्स' : 'Users'}
-          </button>
-          <button className={`admin-nav-btn ${tab === 'training' ? 'active' : ''}`}
-            onClick={() => setTab('training')}>
-            <span className="nav-icon">🎬</span>
-            {lang === 'hi' ? 'ट्रेनिंग' : 'Training'}
-          </button>
-          <button className={`admin-nav-btn ${tab === 'compliance' ? 'active' : ''}`}
-            onClick={() => setTab('compliance')}>
-            <span className="nav-icon">📋</span>
-            {lang === 'hi' ? 'कम्प्लायंस' : 'Compliance'}
-          </button>
-          <button className={`admin-nav-btn ${tab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setTab('dashboard')}>
-            <span className="nav-icon">📈</span>
-            {lang === 'hi' ? 'ओनर डैश' : 'Owner Dash'}
-          </button>
-        </nav>
-        <button className="admin-nav-btn admin-close-btn" onClick={onClose}>
-          <span className="nav-icon">←</span>
-          {lang === 'hi' ? 'वापस जाएं' : 'Back to App'}
+      <div className="admin-top-bar">
+        <button className="admin-back-btn" onClick={onClose}>
+          ← {lang === 'hi' ? 'वापस' : 'Back'}
         </button>
+        <h2 className="admin-top-title">AMBRIA {lang === 'hi' ? 'एडमिन' : 'Admin'}</h2>
+        <div style={{ width: 60 }}></div>
       </div>
       <div className="admin-content">
         {tab === 'overview' && <OverviewTab lang={lang} />}
@@ -57,6 +27,28 @@ export default function AdminPanel({ lang, session, onClose }) {
         {tab === 'compliance' && <ComplianceTab lang={lang} />}
         {tab === 'dashboard' && <OwnerDashboard lang={lang} />}
       </div>
+      <nav className="admin-tab-bar">
+        <button className={`admin-tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
+          <span className="admin-tab-icon">📊</span>
+          <span className="admin-tab-label">{lang === 'hi' ? 'ओवरव्यू' : 'Overview'}</span>
+        </button>
+        <button className={`admin-tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
+          <span className="admin-tab-icon">👥</span>
+          <span className="admin-tab-label">{lang === 'hi' ? 'यूज़र्स' : 'Users'}</span>
+        </button>
+        <button className={`admin-tab ${tab === 'training' ? 'active' : ''}`} onClick={() => setTab('training')}>
+          <span className="admin-tab-icon">🎬</span>
+          <span className="admin-tab-label">{lang === 'hi' ? 'ट्रेनिंग' : 'Training'}</span>
+        </button>
+        <button className={`admin-tab ${tab === 'compliance' ? 'active' : ''}`} onClick={() => setTab('compliance')}>
+          <span className="admin-tab-icon">📋</span>
+          <span className="admin-tab-label">{lang === 'hi' ? 'रिपोर्ट' : 'Report'}</span>
+        </button>
+        <button className={`admin-tab ${tab === 'dashboard' ? 'active' : ''}`} onClick={() => setTab('dashboard')}>
+          <span className="admin-tab-icon">📈</span>
+          <span className="admin-tab-label">{lang === 'hi' ? 'डैश' : 'Dash'}</span>
+        </button>
+      </nav>
     </div>
   );
 }
@@ -110,6 +102,7 @@ function OverviewTab({ lang }) {
           </div>
 
           <h2 className="admin-section-title">{lang === 'hi' ? 'डिपार्टमेंट वाइज़' : 'By Department'}</h2>
+          <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
@@ -138,6 +131,7 @@ function OverviewTab({ lang }) {
               })}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>
@@ -237,6 +231,7 @@ function UsersTab({ lang, session }) {
       </p>
 
       {loading ? <p className="admin-loading">Loading...</p> : (
+        <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -289,6 +284,7 @@ function UsersTab({ lang, session }) {
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

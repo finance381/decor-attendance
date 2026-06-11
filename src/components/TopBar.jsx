@@ -16,24 +16,12 @@ const AdminIcon = () => (
 );
 
 export default function TopBar({ lang, isNight, onToggleLang, onToggleShift, session, onLogout, onAdmin, onChangePin, onGuide }) {
-  const handleAdminClick = () => {
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    if (isMobile) {
-      // Open in browser tab so admin gets full desktop width
-      const url = new URL(window.location.href);
-      url.searchParams.set('admin', '1');
-      window.open(url.toString(), '_blank');
-    } else {
-      onAdmin();
-    }
-  };
-
   return (
     <div className="top-bar">
       <h1>{t('appTitle', lang)}</h1>
       <div className="top-bar-actions">
         {session?.is_admin && (
-          <button className="toggle-btn" onClick={handleAdminClick} title="Admin"><AdminIcon /></button>
+          <button className="toggle-btn" onClick={onAdmin} title="Admin"><AdminIcon /></button>
         )}
         <button className={`toggle-btn ${isNight ? 'active' : ''}`} onClick={onToggleShift}>
           {isNight ? t('nightShift', lang) : t('dayShift', lang)}
